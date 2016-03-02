@@ -23,31 +23,24 @@ namespace EntityGenerator
             InitializeComponent();
         }
 
-        private bool ValidateControl()
+        private bool ValidateParameters()
         {
-            if (comboBoxDB.SelectedItem.ToString().Trim() == string.Empty)
-            {
-                return false;
-            }
-            if (textBoxConnStr.Text.Trim() == string.Empty)
-            {
-                return false;
-            }
-            return true;
+            return comboBoxDB.SelectedItem.ToString().Trim() != string.Empty &&
+                   textBoxConnStr.Text.Trim() != string.Empty;
         }
 
         private void GenerateTypeInfo()
         {
-            AppDomain currentDomain = AppDomain.CurrentDomain;
-            AssemblyName aName = new AssemblyName("TypeInfo");
-            AssemblyBuilder ab = currentDomain.DefineDynamicAssembly(
+            var currentDomain = AppDomain.CurrentDomain;
+            var aName = new AssemblyName("TypeInfo");
+            var ab = currentDomain.DefineDynamicAssembly(
                 aName, AssemblyBuilderAccess.RunAndSave);
-            ModuleBuilder mb = ab.DefineDynamicModule(aName.Name, aName.Name + ".dll");
+            var mb = ab.DefineDynamicModule(aName.Name, aName.Name + ".dll");
 
 
             var types =
                 from file in
-                    new DirectoryInfo(System.AppDomain.CurrentDomain.SetupInformation.ApplicationBase).GetFiles(
+                    new DirectoryInfo(AppDomain.CurrentDomain.SetupInformation.ApplicationBase).GetFiles(
                         "*.csv", SearchOption.TopDirectoryOnly)
                 select
                     new
@@ -55,11 +48,11 @@ namespace EntityGenerator
                         Fields = File.ReadAllText(file.Name).Split(','),
                         FileName = file.Name.Substring(0, file.Name.IndexOf('.'))
                     };
-            var listTypeBuilder = new List<TypeBuilder>();
+           
 
             foreach (var item in types)
             {
-                TypeBuilder tb = mb.DefineType(item.FileName + "TableColumn", TypeAttributes.Public);
+                var tb = mb.DefineType(item.FileName + "TableColumn", TypeAttributes.Public);
                 foreach (var field in item.Fields)
                 {
                     tb.DefineField(field.Trim(), typeof (string),
@@ -92,7 +85,7 @@ namespace EntityGenerator
 
         private void button2_Click(object sender, EventArgs e)
         {
-            if (!ValidateControl())
+            if (!ValidateParameters())
             {
                 MessageBox.Show("请填上必填项");
                 return;
@@ -120,18 +113,20 @@ namespace EntityGenerator
 
         private void comboBoxTableName_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var classTemplate = new StringBuilder();
-            classTemplate.AppendFormat("public class {0}Entity\r\n{{\r\n",comboBoxTableName.SelectedItem.ToString());
-            var entityGenerator = EntityGeneratorFactory.GetEntityGeneratorFactory(comboBoxDB.Text.Trim(),textBoxConnStr.Text.Trim());
-            var tableEntity =entityGenerator.ConstructRecordEntity(comboBoxTableName.SelectedItem.ToString().Trim());
-            foreach (var item in tableEntity)
-            {
-                classTemplate.AppendFormat("\tprivate {0} _{1};\r\n",TypeMapper.Map(item.ColumnType.ToLower()),item.ColumnName.ToLower());
-                classTemplate.AppendFormat("\tpublic {0} {1}\r\n\t{{\r\n\t\tget;\r\n\t\tset;\r\n\t}}\r\n\r\n", TypeMapper.Map(item.ColumnType), item.ColumnName.ToUpper());
-            }
-            classTemplate.AppendFormat("}}\r\n");
+            var tableRecord= EntityGeneratorFactory.GetEntityGeneratorFactory(comboBoxDB.Text.Trim(), textBoxConnStr.Text.Trim()).ConstructRecordEntity(comboBoxTableName.SelectedItem.ToString().Trim());
+            var template = ClassTemplateGenerator.Go(LanguageType.CSharp, comboBoxTableName.SelectedItem.ToString(), tableRecord);
+            textBoxResult.Text = template.ToString();
+            //classTemplate.AppendFormat("public class {0}Entity\r\n{{\r\n",comboBoxTableName.SelectedItem.ToString());
+            //var entityGenerator = EntityGeneratorFactory.GetEntityGeneratorFactory(comboBoxDB.Text.Trim(),textBoxConnStr.Text.Trim());
+            //var tableEntity =entityGenerator.ConstructRecordEntity(comboBoxTableName.SelectedItem.ToString().Trim());
+            //foreach (var item in tableEntity)
+            //{
+            //    classTemplate.AppendFormat("\tprivate {0} _{1};\r\n",TypeMapper.Map(item.ColumnType.ToLower()),item.ColumnName.ToLower());
+            //    classTemplate.AppendFormat("\tpublic {0} {1}\r\n\t{{\r\n\t\tget;\r\n\t\tset;\r\n\t}}\r\n\r\n", TypeMapper.Map(item.ColumnType), item.ColumnName.ToUpper());
+            //}
+            //classTemplate.AppendFormat("}}\r\n");
 
-            textBoxResult.Text = classTemplate.ToString();
+            //textBoxResult.Text = classTemplate.ToString();
         }
     }
 }

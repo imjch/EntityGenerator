@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace EntityGenerator.Type
 {
-    abstract class ConnectionStringConstructor
+    abstract class ConnectionObjectConstructor
     {
         private readonly string connStr;
 
-        protected ConnectionStringConstructor(string connStr)
+        protected ConnectionObjectConstructor(string connStr)
         {
             this.connStr = connStr;
         }
@@ -31,10 +31,10 @@ namespace EntityGenerator.Type
         public string Password { get; protected set; }
     }
 
-    class OracleConnectionStringConstructor : ConnectionStringConstructor
+    class OracleConnectionObjectConstructor : ConnectionObjectConstructor
     {
         private readonly Dictionary<string, string> dict;
-        public OracleConnectionStringConstructor(string connStr):base(connStr)
+        public OracleConnectionObjectConstructor(string connStr):base(connStr)
         {
             dict = ResolveConnectionString();
             this.User = ConstructUser();
@@ -57,15 +57,15 @@ namespace EntityGenerator.Type
             return dict;
         }
 
-        protected override sealed string ConstructUser()
+        protected sealed override string ConstructUser()
         {
             return dict[dict.Keys.First((x) => x.Contains("USER_ID"))];
         }
-        protected override sealed string ConstructDataBase()
+        protected sealed override string ConstructDataBase()
         {
             return dict[dict.Keys.First((x) => x.Contains("DATA_SOURCE"))];
         }
-        protected override sealed string ConstructPassword()
+        protected sealed override string ConstructPassword()
         {
             return dict[dict.Keys.First((x) => x.Contains("PASSWORD"))];
         }

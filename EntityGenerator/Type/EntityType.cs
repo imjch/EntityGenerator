@@ -5,13 +5,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EntityGenerator.Utility;
 
 namespace EntityGenerator.Type
 {
     public class DBTYPE
     {
         public const  string ORACLE = "ORACLE";
-        public const  string MYSQL = "ORACLE";
+        public const  string MYSQL = "MYSQL";
         
     } 
 
@@ -20,7 +21,7 @@ namespace EntityGenerator.Type
         //待以后使用
     }
 
-    public class EntityRecordType : IEnumerable<EntityColumnEntity>
+    public class EntityRecordType : IEnumerable<EntityColumnEntity>, IFieldTypePairs
     {
         private readonly Dictionary<string, EntityColumnEntity> columnTypeList;
         private readonly string entityName;
@@ -74,6 +75,11 @@ namespace EntityGenerator.Type
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        public List<Tuple<string, string, string>> GetFieldTypeList()
+        {
+            return this.Select(item => new Tuple<string, string, string>(item.ColumnName.ToLower(), item.ColumnName.ToUpper(), TypeMapper.Map(item.ColumnType))).ToList();
         }
     }
      

@@ -14,6 +14,7 @@ namespace EntityGenerator.Utility
             {
                 var connString = connectionString.Trim();
                 _oracleConnection = new OracleConnection(connString);
+             
                 Open();
             }
             catch (Exception)
